@@ -39,12 +39,15 @@ func WithPrefix(prefix string) OptionFunc {
 	}
 }
 
-func NewEnvViper() (*viper.Viper, error) {
+func NewEnvViper(optFs ...OptionFunc) (*viper.Viper, error) {
 	d := EnvOptions{
 		FileName:  ".env",
 		FilePath:  ".",
 		FileType:  "env",
 		EnvPrefix: "zzn",
+	}
+	for _, f := range optFs {
+		f(&d)
 	}
 	v := viper.New()
 	// 2. 配置类型，支持 "json", "toml", "yaml", "yml", "properties",
