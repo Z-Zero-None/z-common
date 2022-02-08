@@ -4,9 +4,8 @@ import "github.com/spf13/viper"
 
 /*
 	https://github.com/spf13/viper
-	env====viper.Get("ZERO_NONE") get file param
+	env====viper.Get("ZERO_NONE")获取文件变量
 */
-
 type EnvOptions struct {
 	FileName  string
 	FileType  string
