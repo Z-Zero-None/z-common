@@ -31,7 +31,7 @@ var defaultMysqlConfig = &MysqlConfig{
 	Password:        "123456",
 	Host:            "localhost",
 	Port:            "3306",
-	DataBase:        "test",
+	DataBase:        "common",
 	Charset:         "utf8mb4",
 	ParseTime:       true,
 	MultiStatements: true,

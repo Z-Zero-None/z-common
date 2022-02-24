@@ -22,6 +22,21 @@ services:
       - backend
     restart: always                      # 指定容器退出后的重启策略为始终重启
 
+#  redis环境 #####
+  redis:
+    build:
+      context: ./redis
+    container_name: redisDB
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ${DATA_PATH_HOST}/redis:/data                 # 引用 .env 配置中 DATA_PATH_HOST 变量，将宿主机上存放 Redis 数据的目录挂载到容器中 /data 目录
+    ports:
+      - "${REDIS_PORT}:6379"                          # 设置容器6379端口映射指定宿主机端口
+    networks:
+      - backend
+    restart: always
+
 #  mysql环境 #####
   mysql:
     build:
@@ -67,7 +82,7 @@ services:
       container_name: apollo-adminservice
       image: apolloconfig/apollo-adminservice
       volumes:
-        - ${DATA_PATH_HOST}/apollo/logs:/opt/logs
+        - ${DATA_PATH_HOST}/apollo/logs:/opt/logs   # 挂载日志
       ports:
         - "${APOLLO_ADMIN_SERVICE_PORT}:8090"
       environment:
