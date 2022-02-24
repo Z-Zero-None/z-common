@@ -5,9 +5,11 @@ networks:
     driver: ${NETWORKS_DRIVER}
 
 services:
+#  golang开发环境 #####
   golang:                                # 自定义容器名称
     build:
       context: ./golang                  # 指定构建使用的 Dockerfile 文件
+    container_name: golang
     environment:                         # 设置环境变量
       - TZ=${TZ}
     volumes:                             # 设置挂载目录
@@ -19,3 +21,81 @@ services:
     networks:
       - backend
     restart: always                      # 指定容器退出后的重启策略为始终重启
+
+#  mysql环境 #####
+  mysql:
+    build:
+      context: ./mysql
+    container_name: ${DB_CONTAINER_NAME}
+    environment:
+      - TZ=${TZ}
+#      - MYSQL_USER=${MYSQL_USERNAME}                  # 设置 Mysql 用户名称
+#      - MYSQL_PASSWORD=${MYSQL_PASSWORD}              # 设置 Mysql 用户密码
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}    # 设置 Mysql root 用户密码
+#      - MYSQL_ALLOW_EMPTY_PASSWORD= 'yes'            # 允许无密码访问
+      - MYSQL_DATABASE=${TARGET_DATABASE_NAME}        # 创建默认数据库
+    volumes:
+#      - ./mysql/config/my.cnf:/etc/my.cnf            # mysql相关配置文件
+      - ${DATA_PATH_HOST}/mysql:/var/lib/mysql        # 引用 .env 配置中 DATA_PATH_HOST 变量，将宿主机上存放 Mysql 数据的目录挂载到容器中 /var/lib/mysql 目录
+      - ${DATA_INIT_PATH}:/docker-entrypoint-initdb.d # mysql初始化SQL 添加apollo所需初始化表
+    ports:
+      - "${MYSQL_PORT}:3306"                          # 设置容器3306端口映射指定宿主机端口
+    networks:
+      - backend
+    restart: always
+
+# apollo环境 #####
+  apollo-configservice:
+    container_name: apollo-configservice
+    image: apolloconfig/apollo-configservice
+    volumes:
+      - ${DATA_PATH_HOST}/apollo/logs:/opt/logs
+    ports:
+      - "${APOLLO_CONFIG_SERVICE_PORT}:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://${LOCAL_HOST}:${MYSQL_PORT}/ApolloConfigDB?characterEncoding=${DB_CHARACTER}
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    restart: always
+    network_mode: host
+#    networks:
+#      - backend
+
+  apollo-adminservice:
+      depends_on:
+        - apollo-configservice
+      container_name: apollo-adminservice
+      image: apolloconfig/apollo-adminservice
+      volumes:
+        - ${DATA_PATH_HOST}/apollo/logs:/opt/logs
+      ports:
+        - "${APOLLO_ADMIN_SERVICE_PORT}:8090"
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://${LOCAL_HOST}:${MYSQL_PORT}/ApolloConfigDB?characterEncoding=${DB_CHARACTER}
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      restart: always
+      network_mode: host   # host模式指定是容器与主机享受相同的network namespace，在这种情况下，我们访问主机端口就能访问我们的容器。
+#      networks:            # 与network_mode冲突
+#        - backend
+
+  apollo-portal:
+      depends_on:
+        - apollo-adminservice
+      container_name: apollo-portal
+      image: apolloconfig/apollo-portal
+      volumes:
+        - ${DATA_PATH_HOST}/apollo/logs:/opt/logs
+      ports:
+        - "${APOLLO_PORTAL_PORT}:8070"
+      environment:
+        - SPRING_DATASOURCE_URL=jdbc:mysql://${LOCAL_HOST}:${MYSQL_PORT}/ApolloPortalDB?characterEncoding=${DB_CHARACTER}
+        - SPRING_DATASOURCE_USERNAME=root
+        - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+#        - APOLLO_PORTAL_ENVS=dev
+        - DEV_META=http://${LOCAL_HOST}:${APOLLO_CONFIG_SERVICE_PORT}
+      restart: always
+      network_mode: host
+#      networks:
+#        - backend
+
