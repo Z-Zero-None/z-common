@@ -16,19 +16,23 @@ type ApolloConfig struct {
 	NamespaceName string
 }
 
-func NewApolloCache(con *ApolloConfig) agcache.CacheInterface {
+func NewApolloCache(con *ApolloConfig) (agcache.CacheInterface, error) {
 	c := &config.AppConfig{
-		AppID:          con.AppId,
-		Cluster:        con.Cluster,
+		AppID:   con.AppId,
+		Cluster: con.Cluster,
+		//"http://127.0.0.1:8080"
 		IP:             os.Getenv(ApolloIpKey),
 		NamespaceName:  con.NamespaceName,
 		IsBackupConfig: true,
 		Secret:         os.Getenv(ApolloSecretKey),
 	}
-	client, _ := agollo.StartWithConfig(func() (*config.AppConfig, error) {
+	client, err := agollo.StartWithConfig(func() (*config.AppConfig, error) {
 		return c, nil
 	})
+	if err != nil {
+		return nil, err
+	}
 	//Use your apollo key to test
 	cache := client.GetConfigCache(c.NamespaceName)
-	return cache
+	return cache, nil
 }

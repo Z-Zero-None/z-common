@@ -10,6 +10,7 @@ services:
     build:
       context: ./golang                  # 指定构建使用的 Dockerfile 文件
     container_name: golang
+    working_dir: /usr/src/code
     environment:                         # 设置环境变量
       - TZ=${TZ}
     volumes:                             # 设置挂载目录
@@ -18,8 +19,9 @@ services:
       - "8888:8888"
     stdin_open: true                     # 打开标准输入，可以接受外部输入
     tty: true
+    entrypoint: ./main                     # 执行sh命令 GOOS="linux" CGO_ENABLED="0" go build main.go
     networks:
-      - backend
+     - backend
     restart: always                      # 指定容器退出后的重启策略为始终重启
 
 #  redis环境 #####
@@ -108,7 +110,7 @@ services:
         - SPRING_DATASOURCE_USERNAME=root
         - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
 #        - APOLLO_PORTAL_ENVS=dev
-        - DEV_META=http://${LOCAL_HOST}:${APOLLO_CONFIG_SERVICE_PORT}
+        - DEV_META=http://${LOCAL}:${APOLLO_CONFIG_SERVICE_PORT}
       restart: always
       network_mode: host
 #      networks:
