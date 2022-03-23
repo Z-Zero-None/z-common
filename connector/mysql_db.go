@@ -3,6 +3,7 @@ package connector
 import (
 	"bytes"
 	"fmt"
+	"gorm.io/gorm/schema"
 	"time"
 
 	"gorm.io/driver/mysql"
@@ -28,7 +29,7 @@ type MysqlConfig struct {
 
 var defaultMysqlConfig = &MysqlConfig{
 	UserName:        "root",
-	Password:        "123456",
+	Password:        "123756",
 	Host:            "localhost",
 	Port:            "3306",
 	DataBase:        "common",
@@ -46,7 +47,10 @@ func NewDefaultMysqlConfig() *MysqlConfig {
 
 func (m *MysqlConfig) GetMySQLEngine() (db *gorm.DB, err error) {
 	// 连接中间件实例
-	db, err = gorm.Open(mysql.Open(m.getDsnByBuffer()), &gorm.Config{})
+	db, err = gorm.Open(mysql.Open(m.GetDsnByString()), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true, // 使用单数表名
+		}})
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +68,7 @@ func (m *MysqlConfig) GetMySQLEngine() (db *gorm.DB, err error) {
 
 }
 
-func (m MysqlConfig) getDsnByString() string {
+func (m MysqlConfig) GetDsnByString() string {
 	return fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=%v&parseTime=%v&multiStatements=%v&loc=%v",
 		m.UserName,
 		m.Password,
@@ -78,7 +82,7 @@ func (m MysqlConfig) getDsnByString() string {
 	)
 }
 
-func (m MysqlConfig) getDsnByBuffer() string {
+func (m MysqlConfig) GetDsnByBuffer() string {
 	var buf bytes.Buffer
 	buf.WriteString(m.UserName)
 	buf.WriteString(":")

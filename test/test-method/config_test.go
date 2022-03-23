@@ -1,7 +1,6 @@
 package test_method
 
 import (
-	"fmt"
 	"testing"
 
 	"z-common/config"
@@ -10,9 +9,9 @@ import (
 func TestNewEnvViper(t *testing.T) {
 	viper, err := config.NewEnvViper()
 	if err != nil {
-		fmt.Println("TestNewEnvViper:", err)
+		t.Errorf("TestNewEnvViper.NewEnvViper err:%v", err)
 	}
-	fmt.Println(viper.Get("ZERO_NONE"))
+	t.Log("ZERO_NONE:", viper.Get("ZERO_NONE"))
 }
 
 var defaultApolloConfig = config.ApolloConfig{
@@ -24,7 +23,11 @@ var defaultApolloConfig = config.ApolloConfig{
 func TestNewApolloCache(t *testing.T) {
 	connect, err := config.NewApolloCache(&defaultApolloConfig)
 	if err != nil {
-		fmt.Println("TestNewApolloCache:", err)
+		t.Errorf("TestNewApolloCache.NewApolloCache err:%v", err)
 	}
-	fmt.Println(connect.Get("timeout"))
+	get, err := connect.Get("timeout")
+	if err != nil {
+		t.Errorf("TestNewApolloCache.Get err:%v", err)
+	}
+	t.Log("timeout:", get)
 }
