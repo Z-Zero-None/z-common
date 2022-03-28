@@ -17,11 +17,15 @@ type ApolloConfig struct {
 }
 
 func NewApolloCache(con *ApolloConfig) (agcache.CacheInterface, error) {
+	ip := os.Getenv(ApolloIpKey)
+	if len(ip) == 0 {
+		ip = "http://127.0.0.1:8080"
+	}
 	c := &config.AppConfig{
 		AppID:   con.AppId,
 		Cluster: con.Cluster,
 		//"http://127.0.0.1:8080"
-		IP:             os.Getenv(ApolloIpKey),
+		IP:             ip,
 		NamespaceName:  con.NamespaceName,
 		IsBackupConfig: true,
 		Secret:         os.Getenv(ApolloSecretKey),
