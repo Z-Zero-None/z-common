@@ -12,7 +12,7 @@ import (
 	"strconv"
 )
 
-type MysqlConfig struct {
+type mysqlConfig struct {
 	UserName          string `json:"useName"`
 	Password          string `json:"password"`
 	Host              string `json:"host"`
@@ -27,25 +27,29 @@ type MysqlConfig struct {
 	ConnMaxLifeSecond int    `json:"connMaxLifeSecond"`
 }
 
-var defaultMysqlConfig = &MysqlConfig{
+var defaultMysqlConfig = &mysqlConfig{
 	UserName:        "root",
 	Password:        "123756",
 	Host:            "localhost",
 	Port:            "3306",
 	DataBase:        "common",
 	Charset:         "utf8mb4",
-	ParseTime:       true,
+	ParseTime:       true, //自动将时间戳转换时间
 	MultiStatements: true,
 	Loc:             "Local",
 	MaxOpenConns:    8,
 	MaxIdleConns:    8,
 }
 
-func NewDefaultMysqlConfig() *MysqlConfig {
+func NewDefaultMysqlConfig() *mysqlConfig {
 	return defaultMysqlConfig
 }
 
-func (m *MysqlConfig) GetMySQLEngine() (db *gorm.DB, err error) {
+func NewEmptyMysqlConfig() *mysqlConfig {
+	return &mysqlConfig{}
+}
+
+func (m *mysqlConfig) GetMySQLEngine() (db *gorm.DB, err error) {
 	// 连接中间件实例
 	db, err = gorm.Open(mysql.Open(m.GetDsnByString()), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
@@ -68,7 +72,7 @@ func (m *MysqlConfig) GetMySQLEngine() (db *gorm.DB, err error) {
 
 }
 
-func (m MysqlConfig) GetDsnByString() string {
+func (m mysqlConfig) GetDsnByString() string {
 	return fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=%v&parseTime=%v&multiStatements=%v&loc=%v",
 		m.UserName,
 		m.Password,
@@ -82,7 +86,7 @@ func (m MysqlConfig) GetDsnByString() string {
 	)
 }
 
-func (m MysqlConfig) GetDsnByBuffer() string {
+func (m mysqlConfig) GetDsnByBuffer() string {
 	var buf bytes.Buffer
 	buf.WriteString(m.UserName)
 	buf.WriteString(":")
