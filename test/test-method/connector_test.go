@@ -1,6 +1,7 @@
 package test_method
 
 import (
+	"github.com/gomodule/redigo/redis"
 	"testing"
 	"z-common/connector"
 )
@@ -26,4 +27,23 @@ func BenchmarkGetDsnByBuffer(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		config.GetDsnByString()
 	}
+}
+
+//相关文档 https://pkg.go.dev/github.com/gomodule/redigo/redis#SlowLog
+func TestGetRedisCachePool(t *testing.T) {
+	config := connector.NewDefaultRedisConfig()
+	pool, err := connector.GetRedisCachePool(config)
+	if err != nil {
+		t.Errorf("TestGetRedisCachePool.GetRedisCachePool err:%v", err)
+	}
+	cache := pool.Get()
+	_, err = cache.Do("set", "zzn", 1)
+	if err != nil {
+		t.Errorf("TestGetRedisCachePool.Do.set err:%v", err)
+	}
+	reply, err := redis.String(cache.Do("get", "zzn"))
+	if err != nil {
+		t.Errorf("TestGetRedisCachePool.Do.get err:%v", err)
+	}
+	t.Log("key:zzn,value:", reply)
 }

@@ -16,8 +16,9 @@ type RedisConfig struct {
 	Wait        bool   `json:"wait"`
 }
 
-var defaultRedisConfig = &RedisConfig{
-	Host:        "localhost",
+var defaultRedisConfig = RedisConfig{
+	Host:        "localhost:6379",
+	Password:    "",
 	MaxIdle:     8,
 	MaxActive:   8,
 	IdleTimeout: 240,
@@ -25,20 +26,21 @@ var defaultRedisConfig = &RedisConfig{
 	Wait:        false,
 }
 
+func NewDefaultRedisConfig() *RedisConfig {
+	return &defaultRedisConfig
+}
+
 func redisPing(c redis.Conn, t time.Time) error {
 	_, err := c.Do("PING")
 	return err
 }
 
-func NewRedisCache(rc *RedisConfig) (rp *redis.Pool, err error) {
+func GetRedisCachePool(rc *RedisConfig) (rp *redis.Pool, err error) {
 	if rc == nil {
 		return nil, fmt.Errorf("RedisConfig is nil")
 	}
 	if rc.Host == "" {
 		return nil, fmt.Errorf("lack of RedisConfig.Host")
-	}
-	if rc.Password == "" {
-		return nil, fmt.Errorf("lack of RedisConfig.Password")
 	}
 	//设置默认值
 	if !(rc.MaxActive > 0) {
