@@ -29,24 +29,24 @@ services:
     restart: always                      # 指定容器退出后的重启策略为始终重启
 
   #  redis环境 ##### etcd冲突
-#  redis:
-#    build:
-#      context: ./redis
-#    container_name: redisDB
-#    environment:
-#      - TZ=${TZ}
-#    volumes:
-##      - ./redis.conf:/usr/local/etc/redis/redis.conf:rw   # 由于etcd启用，内置包含redis已经占用了6379+redis的conf文件信息，所以新起的redis需要自己配置redis的conf和一个新的端口。
-#      - ${DATA_PATH_HOST}/redis:/data                 # 引用 .env 配置中 DATA_PATH_HOST 变量，将宿主机上存放 Redis 数据的目录挂载到容器中 /data 目录
-#    ports:
-##      - "${REDIS_PORT}:6379"                          # 设置容器6379端口映射指定宿主机端口
+  redis:
+    build:
+      context: ./redis
+    container_name: redisDB
+    environment:
+      - TZ=${TZ}
+    volumes:
+#      - ./redis.conf:/usr/local/etc/redis/redis.conf:rw   # 由于etcd启用，内置包含redis已经占用了6379+redis的conf文件信息，所以新起的redis需要自己配置redis的conf和一个新的端口。
+      - ${DATA_PATH_HOST}/redis:/data                 # 引用 .env 配置中 DATA_PATH_HOST 变量，将宿主机上存放 Redis 数据的目录挂载到容器中 /data 目录
+    ports:
+      - "${REDIS_PORT}:6379"                          # 设置容器6379端口映射指定宿主机端口
 #      - "${REDIS_BACKUP_PORT}:6479"
-##    network_mode: host
-#    networks:
-#      - backend
-#    restart: always
-##    command:
-##      /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf" # 执行对应指定的redis版本conf文件
+#    network_mode: host
+    networks:
+      - backend
+    restart: always
+#    command:
+#      /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf" # 执行对应指定的redis版本conf文件
 
   #  mysql环境 #####
   mysql:
@@ -146,7 +146,7 @@ services:
       - "${ETCD_PEER_PORT}:2380"
     volumes:
       - ${DATA_PATH_HOST}/etcd/data:/bitnami/etcd
-    network_mode: host
+#    network_mode: host
     restart: always
-#    networks:
-#     - backend
+    networks:
+     - backend

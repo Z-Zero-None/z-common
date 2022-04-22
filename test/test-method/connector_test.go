@@ -47,3 +47,11 @@ func TestGetRedisCachePool(t *testing.T) {
 	}
 	t.Log("key:zzn,value:", reply)
 }
+
+func TestGetETCDCli(t *testing.T) {
+	_, err := connector.GetETCDCli("127.0.0.1:2379")
+	if err != nil {
+		t.Errorf("TestGetETCDCli.GetETCDCli err:%v", err)
+	}
+	t.Log("DB success")
+}
