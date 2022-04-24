@@ -134,7 +134,7 @@ services:
 
   # etcd环境 #####
   etcd:
-    #      image: bitnami/etcd:latest
+#    image: bitnami/etcd:latest
     build:
       context: ./etcd
     container_name: etcd
@@ -150,3 +150,14 @@ services:
     restart: always
     networks:
      - backend
+  jaeger:
+    build:
+      context: ./jaeger
+    container_name: jaeger
+    environment:
+      - TZ=${TZ}
+    ports:
+      - "${JAEGER_PORT}:16686"                        # 设置容器16686端口映射指定宿主机端口，用于宿主机访问可视化web
+    networks:
+      - backend
+    restart: always
