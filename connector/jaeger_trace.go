@@ -9,19 +9,21 @@ import (
 )
 
 type JaegerTraceConfig struct {
-	ServiceName            string
-	SamplerType            string
-	SamplerParam           float64
-	ReporterLogSpans       bool
-	ReporterLocalAgentHost string
+	ServiceName               string
+	SamplerType               string
+	SamplerParam              float64
+	ReporterLogSpans          bool
+	ReporterLocalAgentHost    string
+	ReporterCollectorEndpoint string
 }
 
 var defaultJaegerTraceConfig = JaegerTraceConfig{
-	ServiceName:            "test",
-	SamplerType:            jaeger.SamplerTypeConst,
-	SamplerParam:           1,
-	ReporterLogSpans:       true,
-	ReporterLocalAgentHost: "127.0.0.1:6831",
+	ServiceName:               "test",
+	SamplerType:               jaeger.SamplerTypeConst,
+	SamplerParam:              1,
+	ReporterLogSpans:          true,
+	ReporterLocalAgentHost:    "127.0.0.1:6831",
+	ReporterCollectorEndpoint: "http://127.0.0.1:14268/api/traces",
 }
 
 func NewDefaultJaegerTraceConfig() *JaegerTraceConfig {
@@ -36,9 +38,10 @@ func NewJaegerTrace(setting *JaegerTraceConfig) (opentracing.Tracer, io.Closer, 
 			Param: setting.SamplerParam,
 		},
 		Reporter: &config.ReporterConfig{
-			LogSpans:            setting.ReporterLogSpans,
-			LocalAgentHostPort:  setting.ReporterLocalAgentHost,
+			LogSpans: setting.ReporterLogSpans,
+			//LocalAgentHostPort:  setting.ReporterLocalAgentHost, //二选一
 			BufferFlushInterval: time.Second * 1,
+			CollectorEndpoint:   setting.ReporterCollectorEndpoint,
 		},
 	}
 	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))
