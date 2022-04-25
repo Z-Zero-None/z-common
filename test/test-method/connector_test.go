@@ -55,3 +55,12 @@ func TestGetETCDCli(t *testing.T) {
 	}
 	t.Log("DB success")
 }
+
+func TestNewJaegerTrace(t *testing.T) {
+	config := connector.NewDefaultJaegerTraceConfig()
+	_, _, err := connector.NewJaegerTrace(config)
+	if err != nil {
+		t.Errorf("TestNewJaegerTrace.NewJaegerTrace err:%v", err)
+	}
+	t.Log("jaeger connect success")
+}
