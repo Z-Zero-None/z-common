@@ -18,14 +18,14 @@ services:
     volumes: # 设置挂载目录
       - ${CODE_PATH_HOST}:/usr/src/code  # 引用 .env 配置中 CODE_PATH_HOST 变量，将宿主机上代码存放的目录挂载到容器中 /usr/src/code 目录
     ports: # 设置端口映射
-      #      - "8888:8888"
-      - "8888"
+      - "${GO_SERVER_PORT}:8888"
+#      - "8888"
     stdin_open: true                     # 打开标准输入，可以接受外部输入
     tty: true
     entrypoint: ./main                     # 执行sh命令 GOOS="linux" CGO_ENABLED="0" go build main.go
-    network_mode: host
-    #    networks:
-    #     - backend
+#    network_mode: host
+    networks:
+      - backend
     restart: always                      # 指定容器退出后的重启策略为始终重启
 
   #  redis环境 ##### etcd冲突
@@ -159,6 +159,21 @@ services:
     ports:
       - "${JAEGER_PORT}:16686"                        # 设置容器16686端口映射指定宿主机端口，用于宿主机访问可视化web
       - "${JAEGER_DATA_PORT}:6831/udp"
+    networks:
+      - backend
+    restart: always
+
+  # prometheus环境 #####
+  prometheus:
+    build:
+      context: ./prometheus
+    container_name: prometheus
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ./prometheus/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml  # 将 prometheus 配置文件挂载到容器里
+    ports:
+      - "${PROMETHEUS_PORT}:9090"                     # 设置容器9090端口映射指定宿主机端口，用于宿主机访问可视化web
     networks:
       - backend
     restart: always
