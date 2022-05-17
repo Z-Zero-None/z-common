@@ -17,6 +17,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pelletier/go-toml v1.9.4 // indirect
+	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
@@ -26,7 +27,6 @@ require (
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	go.etcd.io/etcd/client/v3 v3.5.4
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
-	golang.org/x/sys v0.0.0-20211210111614-af8b64212486 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gorm.io/driver/mysql v1.2.3

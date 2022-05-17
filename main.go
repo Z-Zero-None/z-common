@@ -7,7 +7,7 @@ import (
 
 func DoSomething(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
-		"done": "今天要努力!!!",
+		"done": "今天要努力!!!,zhong ze nan",
 	})
 }
 

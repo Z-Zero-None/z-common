@@ -22,7 +22,7 @@ services:
 #      - "8888"
     stdin_open: true                     # 打开标准输入，可以接受外部输入
     tty: true
-    entrypoint: ./main                     # 执行sh命令 GOOS="linux" CGO_ENABLED="0" go build main.go
+    entrypoint: ./startup.sh                     # 执行sh命令 GOOS="linux" CGO_ENABLED="0" go build main.go  修改为脚本执行
 #    network_mode: host
     networks:
       - backend
