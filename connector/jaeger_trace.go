@@ -5,7 +5,6 @@ import (
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
 	"io"
-	"time"
 )
 
 type JaegerTraceConfig struct {
@@ -18,11 +17,12 @@ type JaegerTraceConfig struct {
 }
 
 var defaultJaegerTraceConfig = JaegerTraceConfig{
-	ServiceName:               "test",
-	SamplerType:               jaeger.SamplerTypeConst,
-	SamplerParam:              1,
-	ReporterLogSpans:          true,
-	ReporterLocalAgentHost:    "127.0.0.1:6831",
+	ServiceName:      "test",
+	SamplerType:      jaeger.SamplerTypeConst,
+	SamplerParam:     1,
+	ReporterLogSpans: true,
+	//ReporterLocalAgentHost:    "127.0.0.1:6831", //local:go run main.go
+	ReporterLocalAgentHost:    "jaeger:6831", //link:go run main.go
 	ReporterCollectorEndpoint: "http://127.0.0.1:14268/api/traces",
 }
 
@@ -38,10 +38,10 @@ func NewJaegerTrace(setting *JaegerTraceConfig) (opentracing.Tracer, io.Closer, 
 			Param: setting.SamplerParam,
 		},
 		Reporter: &config.ReporterConfig{
-			LogSpans: setting.ReporterLogSpans,
-			//LocalAgentHostPort:  setting.ReporterLocalAgentHost, //二选一
-			BufferFlushInterval: time.Second * 1,
-			CollectorEndpoint:   setting.ReporterCollectorEndpoint,
+			LogSpans:           setting.ReporterLogSpans,
+			LocalAgentHostPort: setting.ReporterLocalAgentHost, //ReporterCollectorEndpoint/ReporterLocalAgentHost二选一
+			//BufferFlushInterval: time.Second * 1,
+			//CollectorEndpoint:   setting.ReporterCollectorEndpoint,
 		},
 	}
 	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))

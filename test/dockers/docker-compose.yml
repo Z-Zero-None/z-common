@@ -17,6 +17,10 @@ services:
       - TZ=${TZ}
     volumes: # 设置挂载目录
       - ${CODE_PATH_HOST}:/usr/src/code  # 引用 .env 配置中 CODE_PATH_HOST 变量，将宿主机上代码存放的目录挂载到容器中 /usr/src/code 目录
+    links:
+      - mysql
+      - redis
+      - jaeger
     ports: # 设置端口映射
       - "${GO_SERVER_PORT}:8888"
 #      - "8888"
