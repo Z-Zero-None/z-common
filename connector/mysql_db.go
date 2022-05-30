@@ -28,9 +28,10 @@ type mysqlConfig struct {
 }
 
 var defaultMysqlConfig = &mysqlConfig{
-	UserName:        "root",
-	Password:        "123756",
-	Host:            "localhost",
+	UserName: "root",
+	Password: "123756",
+	//Host:     "localhost",
+	Host:            "mysql",
 	Port:            "3306",
 	DataBase:        "common",
 	Charset:         "utf8mb4",
