@@ -1,3 +1,3 @@
-FROM bitnami/etcd
+FROM bitnami/etcd:latest
 
 LABEL maintainer="zzn"

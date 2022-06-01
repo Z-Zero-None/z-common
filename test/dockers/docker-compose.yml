@@ -40,7 +40,7 @@ services:
     environment:
       - TZ=${TZ}
     volumes:
-#      - ./redis.conf:/usr/local/etc/redis/redis.conf:rw   # 由于etcd启用，内置包含redis已经占用了6379+redis的conf文件信息，所以新起的redis需要自己配置redis的conf和一个新的端口。
+#      - ./redis/conf:/usr/local/etc/redis/redis.conf:rw   # 由于etcd启用，内置包含redis已经占用了6379+redis的conf文件信息，所以新起的redis需要自己配置redis的conf和一个新的端口。
       - ${DATA_PATH_HOST}/redis:/data                 # 引用 .env 配置中 DATA_PATH_HOST 变量，将宿主机上存放 Redis 数据的目录挂载到容器中 /data 目录
     ports:
       - "${REDIS_PORT}:6379"                          # 设置容器6379端口映射指定宿主机端口
@@ -143,8 +143,14 @@ services:
       context: ./etcd
     container_name: etcd
     environment:
+      - TZ=${TZ}
       - ALLOW_NONE_AUTHENTICATION=yes
       - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379    # 列出这个成员的客户端URL，通告给集群中的其他成员
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_CLUSTER=node1=http://0.0.0.0:2380
+      - ETCD_NAME=node1
+      - ETCD_DATA_DIR=/opt/bitnami/etcd/data
     ports:
       - "${ETCD_CLIENT_PORT}:2379"
       - "${ETCD_PEER_PORT}:2380"

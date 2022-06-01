@@ -1,8 +1,10 @@
 package test_method
 
 import (
+	"context"
 	"github.com/gomodule/redigo/redis"
 	"testing"
+	"time"
 	"z-common/connector"
 )
 
@@ -49,11 +51,29 @@ func TestGetRedisCachePool(t *testing.T) {
 }
 
 func TestGetETCDCli(t *testing.T) {
-	_, err := connector.GetETCDCli("127.0.0.1:2379")
+	cli, err := connector.GetETCDCli("127.0.0.1:2379")
 	if err != nil {
 		t.Errorf("TestGetETCDCli.GetETCDCli err:%v", err)
 	}
 	t.Log("DB success")
+	//defer cli.Close()
+	ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+	_, err = cli.Put(context.Background(), "name", "Jaye")
+	cancelFunc()
+	if err != nil {
+		t.Errorf("cli.Put err %v", err.Error())
+	}
+
+	//取值
+	ctx, cancelFunc = context.WithTimeout(context.Background(), 5*time.Second)
+	res, err := cli.Get(ctx, "name")
+	if err != nil {
+		t.Errorf("cli.Get err %v", err.Error())
+	}
+	cancelFunc()
+	for k, v := range res.Kvs {
+		t.Log("查询结果", k, string(v.Key), string(v.Value))
+	}
 }
 
 func TestNewJaegerTrace(t *testing.T) {
