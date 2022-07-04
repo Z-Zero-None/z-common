@@ -18,7 +18,7 @@ services:
     volumes: # 设置挂载目录
       - ${CODE_PATH_HOST}:/usr/src/code  # 引用 .env 配置中 CODE_PATH_HOST 变量，将宿主机上代码存放的目录挂载到容器中 /usr/src/code 目录
     links:
-      - mysql
+      - mysql                           #  network 使用aliases代替link
       - redis
       - jaeger
     ports: # 设置端口映射
@@ -187,3 +187,62 @@ services:
     networks:
       - backend
     restart: always
+
+  # rocketmq环境 #####
+  rmqnamesrv:
+    image: rocketmqinc/rocketmq
+    container_name: rmqnamesrv
+    restart: always
+    ports:
+      - 9876:9876
+    environment:
+    #内存分配
+      JAVA_OPT_EXT: "-server -Xms1g -Xmx1g"
+    volumes:
+      - ${DATA_PATH_HOST}/rmqnamesrv/logs:/root/logs
+    command: sh mqnamesrv
+    networks:
+      backend:
+        aliases:
+          - rmqnamesrv
+          
+  rmqbroker:
+    image: rocketmqinc/rocketmq
+    container_name: rmqbroker
+    restart: always
+    depends_on:
+      - rmqnamesrv
+    ports:
+      - ${ROCKET_BROKER_PORT1}:10909
+      - ${ROCKET_BROKER_PORT2}:10911
+    volumes:
+      - ${DATA_PATH_HOST}/rmqbroker/logs:/root/logs
+      - ${DATA_PATH_HOST}/rmqbroker/store:/root/store
+      - ./rocketmq/conf/broker.conf:/opt/rocketmq-4.4.0/conf/broker.conf
+    command: sh mqbroker -c /opt/rocketmq-4.4.0/conf/broker.conf
+    environment:
+      NAMESRV_ADDR: "rmqnamesrv:9876"
+      JAVA_OPT_EXT: "-server -Xms1g -Xmx1g -Xmn1g"
+    networks:
+      backend:
+        aliases:
+          - rmqbroker
+          
+  rmqconsole:
+    image: styletang/rocketmq-console-ng
+    container_name: rocketmq-console
+    restart: always
+    ports:
+      - ${ROCKET_CONSOLE_PORT}:8080
+    depends_on:
+      - rmqnamesrv
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DATA_PATH_HOST}/console/logs:/root/logs
+    environment:
+      JAVA_OPTS: "-Drocketmq.namesrv.addr=rmqnamesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false"
+    networks:
+      backend:
+        aliases:
+          - rmqconsole
+          
