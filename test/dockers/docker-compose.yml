@@ -46,11 +46,11 @@ services:
       - "${REDIS_PORT}:6379"                          # 设置容器6379端口映射指定宿主机端口
 #      - "${REDIS_BACKUP_PORT}:6479"
 #    network_mode: host
+#    command:
+#      /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf" # 执行对应指定的redis版本conf文件
     networks:
       - backend
     restart: always
-#    command:
-#      /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf" # 执行对应指定的redis版本conf文件
 
   #  mysql环境 #####
   mysql:
@@ -160,6 +160,8 @@ services:
     restart: always
     networks:
      - backend
+
+  # jaeger环境 #####
   jaeger:
     build:
       context: ./jaeger
@@ -194,7 +196,7 @@ services:
     container_name: rmqnamesrv
     restart: always
     ports:
-      - 9876:9876
+      - "${ROCKET_NAME_SERVICE_PORT}:9876"
     environment:
     #内存分配
       JAVA_OPT_EXT: "-server -Xms1g -Xmx1g"
@@ -213,8 +215,8 @@ services:
     depends_on:
       - rmqnamesrv
     ports:
-      - ${ROCKET_BROKER_PORT1}:10909
-      - ${ROCKET_BROKER_PORT2}:10911
+      - "${ROCKET_BROKER_PORT1}:10909"
+      - "${ROCKET_BROKER_PORT2}:10911"
     volumes:
       - ${DATA_PATH_HOST}/rmqbroker/logs:/root/logs
       - ${DATA_PATH_HOST}/rmqbroker/store:/root/store
@@ -233,7 +235,7 @@ services:
     container_name: rocketmq-console
     restart: always
     ports:
-      - ${ROCKET_CONSOLE_PORT}:8080
+      - "${ROCKET_CONSOLE_PORT}:8080"
     depends_on:
       - rmqnamesrv
     volumes:
