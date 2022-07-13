@@ -273,3 +273,17 @@ services:
         aliases:
           - rmqconsole
           
+  # rabbitmq环境 #####
+  rabbitmq:
+    build:
+      context: ./rabbitmq
+    container_name: rabbitmq3.9
+    restart: always
+    ports:
+      - ${RABBIT_SERVICE_PORT1}:5672
+      - ${RABBIT_SERVICE_PORT2}:15672
+    volumes:
+      - ${DATA_PATH_HOST}/rabbitmq/data:/var/lib/rabbitmq3
+      - ./rabbitmq/conf/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    networks: 
+      - backend
