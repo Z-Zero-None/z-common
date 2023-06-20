@@ -1,1 +1,2 @@
 test/dockers/data/
+/test/deploy/vagrant/.vagrant/
