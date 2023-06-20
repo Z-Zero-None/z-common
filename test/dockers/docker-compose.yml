@@ -265,7 +265,7 @@ services:
       - rmqnamesrv
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - ${DATA_PATH_HOST}/console/logs:/root/logs
+      - ${DATA_PATH_HOST}/rmqconsole/logs:/root/logs
     environment:
       JAVA_OPTS: "-Drocketmq.namesrv.addr=rmqnamesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false"
     networks:
@@ -285,5 +285,19 @@ services:
     volumes:
       - ${DATA_PATH_HOST}/rabbitmq/data:/var/lib/rabbitmq3
       - ./rabbitmq/conf/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    networks: 
+      - backend
+  
+  #nginx环境搭建
+  nginx:
+    restart: always
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - ${NGINX_SERVER_PORT}:80
+    volumes:
+      - ${DATA_PATH_HOST}/nginx/conf.d/:/etc/nginx/conf.d
+      - ${DATA_PATH_HOST}/nginx/html/:/usr/share/nginx/html
+      - ${DATA_PATH_HOST}/nginx/log/:/var/log/nginx
     networks: 
       - backend
