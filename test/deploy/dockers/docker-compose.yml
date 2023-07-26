@@ -1,0 +1,317 @@
+version: '3.5'
+# 网络配置
+networks:
+  backend:
+    driver: ${NETWORKS_DRIVER}
+
+#查看所有被占用的端口:netstat   -nultp
+
+services:
+  #  golang开发环境 #####
+  golang: # 自定义容器名称
+    build:
+      context: ./golang                  # 指定构建使用的 Dockerfile 文件
+    container_name: golang
+    working_dir: /usr/src/code
+    environment: # 设置环境变量
+      - TZ=${TZ}
+    volumes: # 设置挂载目录
+      - ${CODE_PATH_HOST}:/usr/src/code  # 引用 .env 配置中 CODE_PATH_HOST 变量，将宿主机上代码存放的目录挂载到容器中 /usr/src/code 目录
+    links:
+      - mysql                           #  network 使用aliases代替link
+      - redis
+      - jaeger
+    ports: # 设置端口映射
+      - "${GO_SERVER_PORT}:8888"
+#      - "8888"
+    stdin_open: true                     # 打开标准输入，可以接受外部输入
+    tty: true
+    entrypoint: ./startup.sh                     # 执行sh命令 GOOS="linux" CGO_ENABLED="0" go build main.go  修改为脚本执行
+#    network_mode: host
+    networks:
+      - backend
+    restart: always                      # 指定容器退出后的重启策略为始终重启
+
+  #  redis环境 ##### etcd冲突
+  redis:
+    build:
+      context: ./redis
+    container_name: redisDB
+    environment:
+      - TZ=${TZ}
+    volumes:
+#      - ./redis/conf:/usr/local/etc/redis/redis.conf:rw   # 由于etcd启用，内置包含redis已经占用了6379+redis的conf文件信息，所以新起的redis需要自己配置redis的conf和一个新的端口。
+      - ${DATA_PATH_HOST}/redis:/data                 # 引用 .env 配置中 DATA_PATH_HOST 变量，将宿主机上存放 Redis 数据的目录挂载到容器中 /data 目录
+    ports:
+      - "${REDIS_PORT}:6379"                          # 设置容器6379端口映射指定宿主机端口
+#      - "${REDIS_BACKUP_PORT}:6479"
+#    network_mode: host
+#    command:
+#      /bin/bash -c "redis-server /usr/local/etc/redis/redis.conf" # 执行对应指定的redis版本conf文件
+    networks:
+      - backend
+    restart: always
+
+  #  mysql环境 #####
+  mysql:
+    build:
+      context: ./mysql
+    container_name: ${DB_CONTAINER_NAME}
+    environment:
+      - TZ=${TZ}
+      #      - MYSQL_USER=${MYSQL_USERNAME}                  # 设置 Mysql 用户名称
+      #      - MYSQL_PASSWORD=${MYSQL_PASSWORD}              # 设置 Mysql 用户密码
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}    # 设置 Mysql root 用户密码
+      #      - MYSQL_ALLOW_EMPTY_PASSWORD= 'yes'            # 允许无密码访问
+      - MYSQL_DATABASE=${TARGET_DATABASE_NAME}        # 创建默认数据库
+    volumes:
+      #      - ./mysql/config/my.cnf:/etc/my.cnf            # mysql相关配置文件
+      - ${DATA_PATH_HOST}/mysql:/var/lib/mysql        # 引用 .env 配置中 DATA_PATH_HOST 变量，将宿主机上存放 Mysql 数据的目录挂载到容器中 /var/lib/mysql 目录
+      - ${DATA_INIT_PATH}:/docker-entrypoint-initdb.d # mysql初始化SQL 添加apollo所需初始化表
+    ports:
+      - "${MYSQL_PORT}:3306"                          # 设置容器3306端口映射指定宿主机端口
+#      - "${MYSQL_PORT}"
+#    network_mode: host
+    networks:
+      backend:
+        aliases:
+          - mysql
+    restart: always
+
+  # phpadminmysql环境 #####
+  mysql-manage:
+    build:
+      context: ./mysqlmanage
+    container_name: mysqlManage
+    environment:
+      - TZ=${TZ}
+      - PMA_ARBITRARY=1
+      # - MYSQL_USER=${MYSQL_MANAGE_USERNAME}               # 设置连接的 Mysql 服务用户名称
+      # - MYSQL_PASSWORD=${MYSQL_MANAGE_PASSWORD}           # 设置连接的 Mysql 服务用户密码 mysql没设置admin账户
+      - MYSQL_ROOT_PASSWORD=${MYSQL_MANAGE_ROOT_PASSWORD} # 设置连接的 Mysql 服务 root 用户密码
+      - PMA_HOST=${MYSQL_MANAGE_CONNECT_HOST}             # 设置连接的 Mysql 服务 host，可以是 Mysql 服务容器的名称，也可以是 Mysql 服务容器的 ip 地址
+      - PMA_PORT=${MYSQL_MANAGE_CONNECT_PORT}             # 设置连接的 Mysql 服务端口号
+    ports:
+      - "${MYSQL_MANAGE_PORT}:80"                         # 设置容器80端口映射指定宿主机端口，用于宿主机访问可视化web
+    depends_on:                                           # 依赖容器
+      - mysql                                             # 在 Mysql 服务容器启动后启动
+    networks:
+      - backend
+    restart: always
+
+  
+  
+  # apollo环境 默认账号密码：apollo/admin #####
+  apollo-configservice:
+    depends_on:
+      - mysql
+    container_name: apollo-configservice
+    image: apolloconfig/apollo-configservice
+    volumes:
+      - ${DATA_PATH_HOST}/apollo/logs:/opt/logs
+    ports:
+      - "${APOLLO_CONFIG_SERVICE_PORT}:8080"
+      # - "${APOLLO_CONFIG_SERVICE_PORT}"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:${MYSQL_PORT}/ApolloConfigDB?characterEncoding=${DB_CHARACTER}
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    restart: always
+    # network_mode: host
+    networks:
+      - backend
+
+  apollo-adminservice:
+    depends_on:
+      - apollo-configservice
+    container_name: apollo-adminservice
+    image: apolloconfig/apollo-adminservice
+    volumes:
+      - ${DATA_PATH_HOST}/apollo/logs:/opt/logs   # 挂载日志
+    ports:
+      - "${APOLLO_ADMIN_SERVICE_PORT}:8090"
+      # - "${APOLLO_ADMIN_SERVICE_PORT}"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:${MYSQL_PORT}/ApolloConfigDB?characterEncoding=${DB_CHARACTER}
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    restart: always
+    # network_mode: host   # host模式指定是容器与主机享受相同的network namespace，在这种情况下，我们访问主机端口就能访问我们的容器。
+    networks:            # 与network_mode冲突
+      - backend
+
+  apollo-portal:
+    depends_on:
+      - apollo-adminservice
+    container_name: apollo-portal
+    image: apolloconfig/apollo-portal
+    volumes:
+      - ${DATA_PATH_HOST}/apollo/logs:/opt/logs
+    ports:
+      - "${APOLLO_PORTAL_PORT}:8070"
+      # - "${APOLLO_PORTAL_PORT}"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:${MYSQL_PORT}/ApolloPortalDB?characterEncoding=${DB_CHARACTER}
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      #        - APOLLO_PORTAL_ENVS=dev
+      - DEV_META=http://apollo-configservice:${APOLLO_CONFIG_SERVICE_PORT}
+    restart: always
+    # network_mode: host
+    networks:
+      - backend
+
+  # etcd环境 #####
+  etcd:
+#    image: bitnami/etcd:latest
+#    network_mode: host
+    build:
+      context: ./etcd
+    container_name: etcd
+    environment:
+      - TZ=${TZ}
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379    # 列出这个成员的客户端URL，通告给集群中的其他成员
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_CLUSTER=node1=http://0.0.0.0:2380
+      - ETCD_NAME=node1
+      - ETCD_DATA_DIR=/opt/bitnami/etcd/data
+    ports:
+      - "${ETCD_CLIENT_PORT}:2379"
+      - "${ETCD_PEER_PORT}:2380"
+    volumes:
+      - ${DATA_PATH_HOST}/etcd/data:/bitnami/etcd
+    restart: always
+    networks:
+     - backend
+
+  # jaeger环境 #####
+  jaeger:
+    build:
+      context: ./jaeger
+    container_name: jaeger
+    environment:
+      - TZ=${TZ}
+    ports:
+      - "${JAEGER_PORT}:16686"                        # 设置容器16686端口映射指定宿主机端口，用于宿主机访问可视化web
+      - "${JAEGER_DATA_PORT}:6831/udp"
+    networks:
+      - backend
+    restart: always
+
+  # prometheus环境 #####
+  prometheus:
+    build:
+      context: ./prometheus
+    container_name: prometheus
+    environment:
+      - TZ=${TZ}
+    volumes:
+      - ./prometheus/prometheus.yml:/opt/bitnami/prometheus/conf/prometheus.yml  # 将 prometheus 配置文件挂载到容器里
+    ports:
+      - "${PROMETHEUS_PORT}:9090"                     # 设置容器9090端口映射指定宿主机端口，用于宿主机访问可视化web
+    networks:
+      - backend
+    restart: always
+
+  # rocketmq环境 #####
+  rmqnamesrv:
+    image: rocketmqinc/rocketmq
+    container_name: rmqnamesrv
+    restart: always
+    ports:
+      - "${ROCKET_NAME_SERVICE_PORT}:9876"
+    environment:
+    #内存分配
+      JAVA_OPT_EXT: "-server -Xms1g -Xmx1g"
+    volumes:
+      - ${DATA_PATH_HOST}/rmqnamesrv/logs:/root/logs
+    command: sh mqnamesrv
+    networks:
+      backend:
+        aliases:
+          - rmqnamesrv
+          
+  rmqbroker:
+    image: rocketmqinc/rocketmq
+    container_name: rmqbroker
+    restart: always
+    depends_on:
+      - rmqnamesrv
+    ports:
+      - "${ROCKET_BROKER_PORT1}:10909"
+      - "${ROCKET_BROKER_PORT2}:10911"
+    volumes:
+      - ${DATA_PATH_HOST}/rmqbroker/logs:/root/logs
+      - ${DATA_PATH_HOST}/rmqbroker/store:/root/store
+      - ./rocketmq/conf/broker.conf:/opt/rocketmq-4.4.0/conf/broker.conf
+    command: sh mqbroker -c /opt/rocketmq-4.4.0/conf/broker.conf
+    environment:
+      NAMESRV_ADDR: "rmqnamesrv:9876"
+      JAVA_OPT_EXT: "-server -Xms1g -Xmx1g -Xmn1g"
+    networks:
+      backend:
+        aliases:
+          - rmqbroker
+          
+  rmqconsole:
+    image: styletang/rocketmq-console-ng
+    container_name: rocketmq-console
+    restart: always
+    ports:
+      - "${ROCKET_CONSOLE_PORT}:8080"
+    depends_on:
+      - rmqnamesrv
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${DATA_PATH_HOST}/rmqconsole/logs:/root/logs
+    environment:
+      JAVA_OPTS: "-Drocketmq.namesrv.addr=rmqnamesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false"
+    networks:
+      backend:
+        aliases:
+          - rmqconsole
+          
+  # rabbitmq环境 #####
+  rabbitmq:
+    build:
+      context: ./rabbitmq
+    container_name: rabbitmq3.9
+    restart: always
+    ports:
+      - ${RABBIT_SERVICE_PORT1}:5672
+      - ${RABBIT_SERVICE_PORT2}:15672
+    volumes:
+      - ${DATA_PATH_HOST}/rabbitmq/data:/var/lib/rabbitmq3
+      - ./rabbitmq/conf/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    networks: 
+      - backend
+  
+  #nginx环境搭建
+  nginx:
+    restart: always
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - ${NGINX_SERVER_PORT}:80
+    volumes:
+      - ${DATA_PATH_HOST}/nginx/conf.d/:/etc/nginx/conf.d
+      - ${DATA_PATH_HOST}/nginx/html/:/usr/share/nginx/html
+      - ${DATA_PATH_HOST}/nginx/log/:/var/log/nginx
+    networks: 
+      - backend
+
+  #pgDB环境搭建
+  postgres:
+    image: postgres
+    container_name: local_postgresql
+    restart: always
+    environment:
+      POSTGRES_DB: db_name
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432
+    volumes:
+      - ${DATA_PATH_HOST}/pg/data:/var/lib/postgresql/data
