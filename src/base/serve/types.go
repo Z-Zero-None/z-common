@@ -1,6 +1,6 @@
 package serve
 
-type MethodType uint8
+type MethodType string
 type ServerType uint8
 
 type HandlerInfo struct {
@@ -10,14 +10,6 @@ type HandlerInfo struct {
 	MiddlewareHandlers []interface{}
 	RpcRegister        interface{}
 }
-
-const (
-	_ = iota
-	TYPE_GET
-	TYPE_POST
-	TYPE_PUT
-	TYPE_DELETE
-)
 
 const (
 	_ = iota

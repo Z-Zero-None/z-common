@@ -1,7 +1,10 @@
 package http
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
+	"net/http"
 	"z-common/src/base/serve"
 )
 
@@ -37,9 +40,29 @@ func (h *httpGinServer) AddHandler(info *serve.HandlerInfo) error {
 	for _, handler := range info.MiddlewareHandlers {
 		params = append(params, handler.(func(ctx *gin.Context)))
 	}
+	params = append(params, info.Handler.(func(ctx *gin.Context)))
+	switch info.Method {
+	case http.MethodGet:
+		h.engine.GET(info.Path, params...)
+	case http.MethodPost:
+		h.engine.POST(info.Path, params...)
+	case http.MethodPut:
+		h.engine.PUT(info.Path, params...)
+	case http.MethodDelete:
+		h.engine.DELETE(info.Path, params...)
+	case http.MethodPatch:
+		h.engine.PATCH(info.Path, params...)
+	default:
+		return errors.New("Invalid method of HandlerInfo")
+	}
+	return nil
 }
 
 func (h *httpGinServer) Run(port int) error {
-	//TODO implement me
-	panic("implement me")
+	addr := fmt.Sprintf(":%d", port)
+	err := h.engine.Run(addr)
+	if err != nil {
+		return errors.Wrap(err, "Failed to run http server")
+	}
+	return nil
 }
