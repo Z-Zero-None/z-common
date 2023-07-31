@@ -1,10 +1,16 @@
-package http
+package http_server
 
 import (
-	"fmt"
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
 	"z-common/src/base/serve"
 )
 
@@ -58,11 +64,33 @@ func (h *httpGinServer) AddHandler(info *serve.HandlerInfo) error {
 	return nil
 }
 
-func (h *httpGinServer) Run(port int) error {
-	addr := fmt.Sprintf(":%d", port)
-	err := h.engine.Run(addr)
-	if err != nil {
-		return errors.Wrap(err, "Failed to run http server")
+func (h *httpGinServer) Run(port string) error {
+	readTimeout, _ := strconv.Atoi(os.Getenv("serve_read_timeout"))
+	writeTimeout, _ := strconv.Atoi(os.Getenv("serve_write_timeout"))
+	s := &http.Server{
+		Addr:           ":" + port,
+		Handler:        h.engine,
+		ReadTimeout:    time.Duration(readTimeout) * time.Second,
+		WriteTimeout:   time.Duration(writeTimeout) * time.Second,
+		MaxHeaderBytes: 1 << 20,
 	}
+	//优雅重启
+	go func() {
+		err := s.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("s.ListenAndServe err:%v", err)
+		}
+	}()
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+	timeout, _ := strconv.Atoi(os.Getenv("serve_shutdown_timeout"))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	defer cancel()
+	if err := s.Shutdown(ctx); err != nil {
+		log.Fatalf("Server force to shutdown err:%v", err)
+	}
+	log.Println("Server exiting!!!")
 	return nil
 }

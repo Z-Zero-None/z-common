@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"z-common/connector"
 	"z-common/global"
-	"z-common/tools/middleware"
-
 	_ "z-common/setup"
+	middleware2 "z-common/src/base/middleware"
 )
 
 type Country struct {
@@ -40,8 +39,8 @@ func DoSomething(ctx *gin.Context) {
 
 func main() {
 	r := gin.Default()
-	r.Use(middleware.JaegerTracing(global.JaegerTrace))
-	r.Use(middleware.PrometheusMonitoring())
+	r.Use(middleware2.JaegerTracing(global.JaegerTrace))
+	r.Use(middleware2.PrometheusMonitoring())
 	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	r.GET("/done", DoSomething)
 	err := r.Run(":8888")
