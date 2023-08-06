@@ -4,7 +4,8 @@ sudo su
 apt-get update -y
 apt install net-tools
 ifconfig
-
+apt-get install ntpdate
+ntpdate ntp1.aliyun.com
 #修改root账号密码
 echo "[STEP1-2]Modify root password"
 echo -e "zhongzn-1\nzhongzn-1" |sudo passwd root
@@ -17,7 +18,6 @@ cat >>/etc/hosts<<EOF
 192.168.56.10 k8s-master
 192.168.56.11 k8s-node1
 192.168.56.12 k8s-node2
-52.74.223.119 github.com
 192.30.253.119 gist.github.com
 54.169.195.247 api.github.com
 185.199.111.153 assets-cdn.github.com
@@ -25,7 +25,7 @@ cat >>/etc/hosts<<EOF
 151.101.108.133 user-images.githubusercontent.com
 151.101.76.133 gist.githubusercontent.com
 151.101.76.133 cloud.githubusercontent.com
-151.101.76.133 camo.githubusercontent.com
+151.101.76.133 camo.githubusercontent.comkub
 151.101.76.133 avatars0.githubusercontent.com
 151.101.76.133 avatars1.githubusercontent.com
 151.101.76.133 avatars2.githubusercontent.com
@@ -68,8 +68,47 @@ EOF
 systemctl restart docker
 docker -v
 
+#wget https://github.com/containerd/containerd/releases/download/v1.7.0/containerd-1.7.0-linux-amd64.tar.gz
+#tar Cxzvf /usr/local containerd-1.7.0-linux-amd64.tar.gz
+cat << EOF >> /lib/systemd/system/containerd.service
+[Unit]
+Description=containerd container runtime
+Documentation=https://containerd.io
+After=network.target local-fs.target
+​
+[Service]
+ExecStartPre=-/sbin/modprobe overlay
+ExecStart=/usr/local/bin/containerd
+​
+Type=notify
+Delegate=yes
+KillMode=process
+Restart=always
+RestartSec=5
+# Having non-zero Limit*s causes performance problems due to accounting overhead
+# in the kernel. We recommend using cgroups to do container-local accounting.
+LimitNPROC=infinity
+LimitCORE=infinity
+LimitNOFILE=infinity
+# Comment TasksMax if your systemd version does not supports it.
+# Only systemd 226 and above support this version.
+TasksMax=infinity
+OOMScoreAdjust=-999
+​
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable --now containerd
 #配置请求网桥
 echo "[STEP4] IPTABLES SETTING"
+modprobe overlay
+modprobe br_netfilter
+cat <<EOF >> /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
 cat >>/etc/sysctl.d/kubernetes.conf<<EOF
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
@@ -103,10 +142,14 @@ systemctl restart kubelet
 
 #解决containerd默认不适用cri+替换镜像选用
 echo "[STEP8] CONTAINERD ENABLE"
+containerd config default | tee /etc/containerd/config.toml
+sed -i 's/registry.k8s.io\/pause:3.6/registry.aliyuncs.com\/google_containers\/pause:3.6/g' /etc/containerd/config.toml
 sed -i "s#k8s.gcr.io#registry.cn-hangzhou.aliyuncs.com/google_containers#g"  /etc/containerd/config.toml
 #sed -i "s#https://registry-1.docker.io#https://registry.cn-hangzhou.aliyuncs.com#g"  /etc/containerd/config.toml
-sed -i 's/^disabled_plugins = \["cri"\]/#&/' /etc/containerd/config.toml
-systemctl restart containerd
+#sed -i 's/^disabled_plugins = \["cri"\]/#&/' /etc/containerd/config.toml
+cat /etc/containerd/config.toml | grep -n "sandbox_image"
+systemctl restart containerd && systemctl status containerd
+
 #解决crictl images 出现报错问题"ListImages with filter from image service failed"
 crictl config runtime-endpoint unix:///run/containerd/containerd.sock
 crictl config image-endpoint unix:///run/containerd/containerd.sock
@@ -139,3 +182,13 @@ source /etc/profile
 
 #echo -e "y" |sudo ufw enable
 #ufw allow 6443/tcp
+
+#处理container中pause：3.6问题
+#containerd config default > /etc/containerd/config.toml
+#cat /etc/containerd/config.toml | grep -n "sandbox_image"
+##替换镜像 sandbox_image = "registry.aliyuncs.com/google_containers/pause:3.6"
+#sed -i 's/registry.k8s.io\/pause:3.6/registry.aliyuncs.com\/google_containers\/pause:3.6/g' /etc/containerd/config.toml
+#cat /etc/containerd/config.toml | grep -n "sandbox_image"
+systemctl daemon-reload
+systemctl restart containerd
+

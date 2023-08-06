@@ -1,6 +1,6 @@
 Vagrant.configure("2") do |config|
   #执行脚本
-  config.vm.provision "shell", path: "bootstrap.sh"
+  config.vm.provision "shell", path: "bootstrap_docker.sh"
   
   # Master 节点
   config.vm.define "master" do |master|
