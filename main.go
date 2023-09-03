@@ -5,10 +5,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
-	"z-common/connector"
-	"z-common/global"
-	_ "z-common/setup"
+	"z-common/src/base/connector"
+	"z-common/src/base/global"
 	middleware2 "z-common/src/base/middleware"
+	_ "z-common/src/base/setup"
 )
 
 type Country struct {

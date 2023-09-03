@@ -5,11 +5,11 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"testing"
 	"time"
-	"z-common/connector"
+	connector2 "z-common/src/base/connector"
 )
 
 func TestGetMySQLEngine(t *testing.T) {
-	config := connector.NewDefaultMysqlConfig()
+	config := connector2.NewDefaultMysqlConfig()
 	_, err := config.GetMySQLEngine()
 	if err != nil {
 		t.Errorf("TestGetMySQLEngine.GetMySQLEngine err:%v", err)
@@ -18,23 +18,23 @@ func TestGetMySQLEngine(t *testing.T) {
 }
 
 func BenchmarkGetDsnByString(b *testing.B) {
-	config := connector.NewDefaultMysqlConfig()
+	config := connector2.NewDefaultMysqlConfig()
 	for i := 0; i < b.N; i++ {
 		config.GetDsnByString()
 	}
 }
 
 func BenchmarkGetDsnByBuffer(b *testing.B) {
-	config := connector.NewDefaultMysqlConfig()
+	config := connector2.NewDefaultMysqlConfig()
 	for i := 0; i < b.N; i++ {
 		config.GetDsnByString()
 	}
 }
 
-//相关文档 https://pkg.go.dev/github.com/gomodule/redigo/redis#SlowLog
+// 相关文档 https://pkg.go.dev/github.com/gomodule/redigo/redis#SlowLog
 func TestGetRedisCachePool(t *testing.T) {
-	config := connector.NewDefaultRedisConfig()
-	pool, err := connector.GetRedisCachePool(config)
+	config := connector2.NewDefaultRedisConfig()
+	pool, err := connector2.GetRedisCachePool(config)
 	if err != nil {
 		t.Errorf("TestGetRedisCachePool.GetRedisCachePool err:%v", err)
 	}
@@ -51,7 +51,7 @@ func TestGetRedisCachePool(t *testing.T) {
 }
 
 func TestGetETCDCli(t *testing.T) {
-	cli, err := connector.GetETCDCli("127.0.0.1:2379")
+	cli, err := connector2.GetETCDCli("127.0.0.1:2379")
 	if err != nil {
 		t.Errorf("TestGetETCDCli.GetETCDCli err:%v", err)
 	}
@@ -77,8 +77,8 @@ func TestGetETCDCli(t *testing.T) {
 }
 
 func TestNewJaegerTrace(t *testing.T) {
-	config := connector.NewDefaultJaegerTraceConfig()
-	_, _, err := connector.NewJaegerTrace(config)
+	config := connector2.NewDefaultJaegerTraceConfig()
+	_, _, err := connector2.NewJaegerTrace(config)
 	if err != nil {
 		t.Errorf("TestNewJaegerTrace.NewJaegerTrace err:%v", err)
 	}
