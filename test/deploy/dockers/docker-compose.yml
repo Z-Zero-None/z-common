@@ -324,4 +324,32 @@ services:
     volumes:
       - ./nats/nats-server.conf:/nats-server.conf
     networks:
-      - web-network
+      - backend
+
+# clickhouse基础搭建
+  clickhouse-server:
+    image: clickhouse/clickhouse-server
+    container_name: clickhouse-server
+    restart: always
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native interface
+    environment:
+      - CLICKHOUSE_USER=zhongzn
+      - CLICKHOUSE_PASSWORD=zhongzn
+    volumes:
+      - ${DATA_PATH_HOST}/clickhouse-server/data:/var/lib/clickhouse
+      #      - ./clickhouse-server/config:/etc/clickhouse-server
+      - ${DATA_PATH_HOST}/clickhouse-server/logs:/var/log/clickhouse-server
+    networks:
+      - backend
+
+#  clickhouse管理平台
+  tabix:
+    image: spoonest/clickhouse-tabix-web-client:latest
+    container_name: tabix
+    restart: always
+    ports:
+      - '8180:80'
+    networks:
+      - backend
