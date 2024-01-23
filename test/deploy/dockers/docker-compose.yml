@@ -315,3 +315,13 @@ services:
       - 5432:5432
     volumes:
       - ${DATA_PATH_HOST}/pg/data:/var/lib/postgresql/data
+
+  #nats环境搭建
+  nats:
+    image: nats
+    ports:
+      - "4222:4222"
+    volumes:
+      - ./nats/nats-server.conf:/nats-server.conf
+    networks:
+      - web-network
