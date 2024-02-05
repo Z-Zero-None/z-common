@@ -5,7 +5,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"net/http"
-	"z-common/src/base/connector"
 	"z-common/src/base/global"
 	middleware2 "z-common/src/base/middleware"
 	_ "z-common/src/base/setup"
@@ -19,7 +18,7 @@ type Country struct {
 }
 
 func DoSomething(ctx *gin.Context) {
-	engine, err := connector.NewDefaultMysqlConfig().GetMySQLEngine()
+	engine, err := database.NewDefaultMysqlConfig().GetMySQLEngine()
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"errMsg": err.Error(),

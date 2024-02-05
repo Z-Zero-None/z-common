@@ -1,4 +1,4 @@
-package connector
+package connectors
 
 import (
 	"github.com/opentracing/opentracing-go"

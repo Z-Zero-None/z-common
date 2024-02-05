@@ -1,4 +1,4 @@
-package connector
+package queues
 
 import (
 	"github.com/apache/rocketmq-client-go/v2"
