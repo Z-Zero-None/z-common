@@ -3,6 +3,7 @@ package setup
 import (
 	"fmt"
 	"z-common/global"
+	"z-common/src/base/connectors"
 )
 
 func init() {
@@ -10,8 +11,8 @@ func init() {
 }
 
 func setupJaegerTrace() error {
-	config := database.NewDefaultJaegerTraceConfig()
-	jaegerTrace, _, err := database.NewJaegerTrace(config)
+	config := connectors.NewDefaultJaegerTraceConfig()
+	jaegerTrace, _, err := connectors.NewJaegerTrace(config)
 	if err != nil {
 		return fmt.Errorf("setupJaegerTrace err:%v", err)
 	}

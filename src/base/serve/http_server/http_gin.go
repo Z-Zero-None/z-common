@@ -2,8 +2,8 @@ package http_server
 
 import (
 	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"os"
@@ -77,7 +77,7 @@ func (h *httpGinServer) Run(port string) error {
 	//优雅重启
 	go func() {
 		err := s.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("s.ListenAndServe err:%v", err)
 		}
 	}()
