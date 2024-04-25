@@ -1,0 +1,91 @@
+syntax = "proto3";
+import "api/ptypes/type.proto";
+import "api/google/api/annotations.proto";
+package gopa.api.tea.proto;
+option go_package = "api/products/proto;proto";
+
+message TeaTypeChart{
+  sint32 Code=1;
+  sint64 Score=2;
+}
+
+message TeaTypeChartCreateRequest{
+  sint32 Code=1;
+  sint64 Score=2;
+  sint64 DateTime=3;
+}
+
+message TeaTypeChartDeleteRequest{
+  sint64 Code =1;
+  sint64 DateTime=2;
+}
+
+message TeaTypeChartIncrRequest{
+  sint32 Code=1;
+  sint64 Value=2;
+  sint64 DateTime=3;
+}
+
+message TeaTypeChartGetConditions {
+  sint32 Code=2;
+  string Kind=3;
+  sint64 DateTime = 4;
+}
+
+message TeaTypeChartGetRequest {
+  TeaTypeChartGetConditions Conditions = 1;
+  string Columns = 2;
+}
+
+message TeaTypeChartSearchConditions{
+  sint32 Code=1;
+}
+
+message TeaTypeChartSearchRequest{
+  TeaTypeChartSearchConditions Conditions = 1;
+  string Columns = 2;
+  sint32 Page = 3;
+  sint32 Limit = 4;
+  string OrderBy = 5;
+}
+
+
+message TeaTypeChartResponse {
+  TeaTypeChart TeaTypeChart = 1;
+}
+
+message TeaTypeChartSearchResponse {
+  sint32 Page = 1;
+  sint32 Limit = 2;
+  sint32 Count = 3;
+  sint32 TotalPage = 4;
+  repeated TeaTypeChart List = 5;
+}
+
+service TeaTypeChartRPC{
+  rpc Create(TeaTypeChartCreateRequest)returns(TeaTypeChartResponse){
+    option (google.api.http) = {
+      post: "/api/product/tea-types/create"
+    };
+  }
+  rpc Delete(TeaTypeChartDeleteRequest)returns(ptypes.Int64){
+    option (google.api.http) = {
+      delete: "/api/product/tea-types/delete"
+    };
+  }
+  rpc Update(TeaTypeChartUpdateRequest)returns(ptypes.Empty){
+    option (google.api.http) = {
+      patch: "/api/product/tea-types/update"
+    };
+  }
+  rpc Get(TeaTypeChartGetRequest)returns(TeaTypeChartResponse){
+    option (google.api.http) = {
+      get: "/api/product/tea-types/get"
+    };
+  }
+  rpc Search(TeaTypeChartSearchRequest)returns(TeaTypeChartSearchResponse){
+    option (google.api.http) = {
+      get: "/api/product/tea-types/search"
+    };
+  }
+}

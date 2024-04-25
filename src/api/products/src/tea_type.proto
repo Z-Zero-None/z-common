@@ -1,0 +1,111 @@
+syntax = "proto3";
+import "api/ptypes/type.proto";
+import "api/google/api/annotations.proto";
+package gopa.api.tea.proto;
+option go_package = "api/products/proto;proto";
+
+message TeaType{
+  sint64 ID=1;
+  sint32 Code=2;
+  string Name=3;
+  string Intro=4;
+  string Feature=5;
+  string Process=6;
+  sint64 CreatedTime=7;
+  sint64 UpdatedTime=8;
+}
+
+
+
+message TeaTypeCreateRequest{
+  sint32 Code=2;
+  string Name=3;
+  string Intro=4;
+  string Feature=5;
+  string Process=6;
+}
+
+message TeaTypeDeleteRequest{
+  sint64 ID =1;
+}
+
+message TeaTypeUpdateRequest{
+  sint64 ID=1;
+  sint32 Code=2;
+  string Name=3;
+  string Intro=4;
+  string Feature=5;
+  string Process=6;
+}
+
+message TeaTypeGetConditions {
+  sint64 ID = 1;
+  sint32 Code=2;
+}
+
+message TeaTypeGetRequest {
+  TeaTypeGetConditions Conditions = 1;
+  string Columns = 2;
+}
+
+message TeaTypeFindConditions {
+  repeated sint32 Codes=2;
+}
+
+message TeaTypeFindRequest {
+  TeaTypeFindConditions Conditions = 1;
+  string Columns = 2;
+}
+
+message TeaTypeSearchConditions{
+  sint32 Code=1;
+}
+
+message TeaTypeSearchRequest{
+  TeaTypeSearchConditions Conditions = 1;
+  string Columns = 2;
+  sint32 Page = 3;
+  sint32 Limit = 4;
+  string OrderBy = 5;
+}
+
+
+message TeaTypeResponse {
+  TeaType TeaType = 1;
+}
+
+message TeaTypeSearchResponse {
+  sint32 Page = 1;
+  sint32 Limit = 2;
+  sint32 Count = 3;
+  sint32 TotalPage = 4;
+  repeated TeaType List = 5;
+}
+
+service TeaTypeRPC{
+  rpc Create(TeaTypeCreateRequest)returns(TeaTypeResponse){
+    option (google.api.http) = {
+      post: "/api/product/tea-types/create"
+    };
+  }
+  rpc Delete(TeaTypeDeleteRequest)returns(ptypes.Int64){
+    option (google.api.http) = {
+      delete: "/api/product/tea-types/delete"
+    };
+  }
+  rpc Update(TeaTypeUpdateRequest)returns(ptypes.Empty){
+    option (google.api.http) = {
+      patch: "/api/product/tea-types/update"
+    };
+  }
+  rpc Get(TeaTypeGetRequest)returns(TeaTypeResponse){
+    option (google.api.http) = {
+      get: "/api/product/tea-types/get"
+    };
+  }
+  rpc Search(TeaTypeSearchRequest)returns(TeaTypeSearchResponse){
+    option (google.api.http) = {
+      get: "/api/product/tea-types/search"
+    };
+  }
+}
