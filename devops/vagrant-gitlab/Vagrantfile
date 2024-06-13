@@ -1,0 +1,27 @@
+Vagrant.configure("2") do |config|
+  #执行脚本
+#   config.vm.synced_folder "./docker-gitlab", "/srv/docker-gitlab"
+  config.vm.provision "shell", path: "bootstrap_docker.sh"
+  config.vm.define "linux-gitlab" do |master|
+    master.vm.box = "generic/ubuntu2204"
+    master.vm.hostname = "linux-gitlab"
+    master.vm.network "private_network", ip: "192.168.56.120"
+    master.vm.network "forwarded_port", guest: 22, host: 2222, auto_correct: true
+    master.vm.provider "virtualbox" do |v|
+      v.name = "linux-gitlab"
+      v.memory = 4096
+      v.cpus = 4
+    end
+  end
+  config.vm.define "linux-gitlab-runner" do |master|
+     master.vm.box = "generic/ubuntu2204"
+     master.vm.hostname = "linux-gitlab-runner"
+     master.vm.network "private_network", ip: "192.168.56.121"
+      master.vm.network "forwarded_port", guest: 22, host: 2223, auto_correct: true
+     master.vm.provider "virtualbox" do |v|
+       v.name = "linux-gitlab-runner"
+       v.memory = 2048
+       v.cpus = 2
+     end
+   end
+end

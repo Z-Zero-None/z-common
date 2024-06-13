@@ -1,0 +1,28 @@
+version: '3.6'
+services:
+#  gitlab的账号密码 记得调整账号密码
+  gitlab:
+    image: 'gitlab/gitlab-ee:latest'
+    restart: always
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://172.29.6.96:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+    ports:
+      - '8929:8929'
+      - '2224:2224'
+    volumes:
+      - '${GITLAB_HOME}/config:/etc/gitlab'
+      - '${GITLAB_HOME}/logs:/var/log/gitlab'
+      - '${GITLAB_HOME}/data:/var/opt/gitlab'punish
+    shm_size: '256m'
+
+  gitlab-runner:
+    image: gitlab/gitlab-runner:latest
+    ports:
+      - '8093:8093'
+    volumes:
+      - '${GITLAB_RUNNER_HOME}/config:/etc/gitlab-runner'
+#      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - gitlab
