@@ -1,6 +1,8 @@
 package main
 
-import "z-common/src/base/serve/http_server"
+import (
+	"z-common/src/v1/base/serve/http_server"
+)
 
 func main() {
 	server := http_server.NewServer()

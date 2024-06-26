@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"syscall"
 	"time"
-	"z-common/src/base/serve"
+	serve2 "z-common/src/v1/base/serve"
 )
 
 var middleWareList = []gin.HandlerFunc{
@@ -28,7 +28,7 @@ func (h *httpGinServer) addMiddleware(list []gin.HandlerFunc) {
 	}
 }
 
-func NewServer() serve.IHttpServer {
+func NewServer() serve2.IHttpServer {
 	app := gin.Default()
 	server := &httpGinServer{
 		engine: app,
@@ -41,7 +41,7 @@ func (h *httpGinServer) AddMiddleware(list []gin.HandlerFunc) {
 	h.addMiddleware(list)
 }
 
-func (h *httpGinServer) AddHandler(info *serve.HandlerInfo) error {
+func (h *httpGinServer) AddHandler(info *serve2.HandlerInfo) error {
 	params := make([]gin.HandlerFunc, 0)
 	for _, handler := range info.MiddlewareHandlers {
 		params = append(params, handler.(func(ctx *gin.Context)))
