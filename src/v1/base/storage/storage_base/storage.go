@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"z-common/src/base/storage"
-	"z-common/src/base/utils"
+	"z-common/src/v1/base/storage"
+	"z-common/src/v1/base/utils"
 )
 
 type baseStorage struct {

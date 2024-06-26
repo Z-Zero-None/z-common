@@ -3,7 +3,7 @@ package setup
 import (
 	"fmt"
 	"z-common/global"
-	"z-common/src/base/connectors"
+	"z-common/src/v1/base/connectors"
 )
 
 func init() {
