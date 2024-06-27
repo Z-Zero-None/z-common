@@ -15,7 +15,7 @@ type Service struct {
 }
 
 func (s *Service) String() string {
-	return fmt.Sprintf("%s-%s", s.Name, s.ID)
+	return fmt.Sprintf("%s-%s-%s", s.Namespace, s.Name, s.ID)
 }
 
 type Watcher interface {
