@@ -18,13 +18,13 @@ type Server struct {
 	//todo 服务发现 socket处理
 }
 
-func WithName(name string) ServerOption {
+func Name(name string) ServerOption {
 	return func(s *Server) {
 		s.name = name
 	}
 }
 
-func WithAddr(addr string) ServerOption {
+func Addr(addr string) ServerOption {
 	return func(s *Server) {
 		s.addr = addr
 	}

@@ -25,7 +25,7 @@ type ClientConn interface {
 	Info()
 }
 
-func WithHeader(k string, vs ...string) Option {
+func Header(k string, vs ...string) Option {
 	return func(c *Client) {
 		c.mutex.Lock()
 		defer c.mutex.Unlock()
@@ -33,13 +33,13 @@ func WithHeader(k string, vs ...string) Option {
 	}
 }
 
-func WithHost(h string) Option {
+func Host(h string) Option {
 	return func(c *Client) {
 		c.host = h
 	}
 }
 
-func WithToke(t string) Option {
+func Toke(t string) Option {
 	return func(c *Client) {
 		c.token = t
 	}

@@ -17,7 +17,7 @@ func Test_Client(t *testing.T) {
 	method := "h5/ivt/invitation/rewards"
 
 	newClient := NewClient(
-		WithHost(url),
+		Host(url),
 	)
 	res := &Response{}
 	responseFunc := RespFunc[*Response](res)
