@@ -9,13 +9,12 @@ type Service struct {
 	ID        string            `json:"id"`
 	Version   string            `json:"version"`
 	Name      string            `json:"name"`
-	Namespace string            `json:"namespace"`
 	Metadata  map[string]string `json:"metadata"`
 	Endpoints []string          `json:"endpoint"`
 }
 
 func (s *Service) String() string {
-	return fmt.Sprintf("%s-%s-%s", s.Namespace, s.Name, s.ID)
+	return fmt.Sprintf("%s-%s", s.Name, s.ID)
 }
 
 type Watcher interface {
