@@ -50,6 +50,11 @@ type Registry struct {
 func (r *Registry) key(name, id string) string {
 	return fmt.Sprintf("%s/%s/%s", r.opts.namespace, name, id)
 }
+
+func (r *Registry) serviceKey(name string) string {
+	return fmt.Sprintf("%s/%s", r.opts.namespace, name)
+}
+
 func (r *Registry) Register(ctx context.Context, svc *registry.Service) error {
 	key := r.key(svc.Name, svc.ID)
 	value, err := marshal(svc)
@@ -67,11 +72,11 @@ func (r *Registry) Register(ctx context.Context, svc *registry.Service) error {
 
 	hctx, cancel := context.WithCancel(r.opts.ctx)
 	r.ctxMap[svc] = cancel
-	go r.hearbeat(hctx, leaseID, key, value)
+	go r.heartbeat(hctx, leaseID, key, value)
 	return nil
 }
 
-func (r *Registry) hearbeat(ctx context.Context, leaseID clientv3.LeaseID, key, val string) {
+func (r *Registry) heartbeat(ctx context.Context, leaseID clientv3.LeaseID, key, val string) {
 	curLeaseID := leaseID
 	kac, err := r.client.KeepAlive(ctx, leaseID)
 	if err != nil {
@@ -152,6 +157,43 @@ func (r *Registry) register(ctx context.Context, key, val string) (clientv3.Leas
 }
 
 func (r *Registry) Deregister(ctx context.Context, svc *registry.Service) error {
-	//TODO implement me
-	panic("implement me")
+	defer func() {
+		if r.lease != nil {
+			r.lease.Close()
+		}
+	}()
+	// cancel heartbeat
+	if cancel, ok := r.ctxMap[svc]; ok {
+		cancel()
+		delete(r.ctxMap, svc)
+	}
+	key := r.key(svc.Name, svc.ID)
+	_, err := r.client.Delete(ctx, key)
+	return err
+}
+
+func (r *Registry) GetService(ctx context.Context, name string) ([]*registry.Service, error) {
+	key := r.serviceKey(name)
+	resp, err := r.kv.Get(ctx, key, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	items := make([]*registry.Service, 0, len(resp.Kvs))
+	for _, kv := range resp.Kvs {
+		si, err := unmarshal(kv.Value)
+		if err != nil {
+			return nil, err
+		}
+		if si.Name != name {
+			continue
+		}
+		items = append(items, si)
+	}
+	return items, nil
+}
+
+func (r *Registry) Watch(ctx context.Context, name string) (registry.Watcher, error) {
+	//key := r.serviceKey(name)
+	//return newWatcher(ctx, key, name, r.client)
+	return nil, nil
 }
