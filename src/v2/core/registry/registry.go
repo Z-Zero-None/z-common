@@ -17,11 +17,6 @@ func (s *Service) String() string {
 	return fmt.Sprintf("%s-%s", s.Name, s.ID)
 }
 
-type Watcher interface {
-	Next(ctx context.Context) ([]*Service, error)
-	Cancel() error
-}
-
 type Registry interface {
 	Register(ctx context.Context, svc *Service) error
 	Deregister(ctx context.Context, svc *Service) error
@@ -30,4 +25,9 @@ type Registry interface {
 type Discovery interface {
 	GetService(ctx context.Context, serviceName string) ([]*Service, error)
 	Watch(ctx context.Context, serviceName string) (Watcher, error)
+}
+
+type Watcher interface {
+	Next() ([]*Service, error)
+	Close() error
 }

@@ -9,35 +9,7 @@ import (
 	"z-common/src/v2/core/registry"
 )
 
-var (
-	_ registry.Registry  = nil
-	_ registry.Discovery = nil
-)
-
-type Option func(o *options)
-
-type options struct {
-	ctx       context.Context //上下文
-	namespace string
-	ttl       time.Duration
-	maxRetry  int //重试次数
-}
-
-func Context(ctx context.Context) Option {
-	return func(o *options) { o.ctx = ctx }
-}
-
-func Namespace(ns string) Option {
-	return func(o *options) { o.namespace = ns }
-}
-
-func RegisterTTL(ttl time.Duration) Option {
-	return func(o *options) { o.ttl = ttl }
-}
-
-func MaxRetry(num int) Option {
-	return func(o *options) { o.maxRetry = num }
-}
+var _ registry.Registry = nil
 
 type Registry struct {
 	opts   *options
@@ -47,16 +19,13 @@ type Registry struct {
 	ctxMap map[*registry.Service]context.CancelFunc //停止心跳处理
 }
 
-func (r *Registry) key(name, id string) string {
+// register
+func (r *Registry) registerKey(name, id string) string {
 	return fmt.Sprintf("%s/%s/%s", r.opts.namespace, name, id)
 }
 
-func (r *Registry) serviceKey(name string) string {
-	return fmt.Sprintf("%s/%s", r.opts.namespace, name)
-}
-
 func (r *Registry) Register(ctx context.Context, svc *registry.Service) error {
-	key := r.key(svc.Name, svc.ID)
+	key := r.registerKey(svc.Name, svc.ID)
 	value, err := marshal(svc)
 	if err != nil {
 		return err
@@ -167,33 +136,7 @@ func (r *Registry) Deregister(ctx context.Context, svc *registry.Service) error 
 		cancel()
 		delete(r.ctxMap, svc)
 	}
-	key := r.key(svc.Name, svc.ID)
+	key := r.registerKey(svc.Name, svc.ID)
 	_, err := r.client.Delete(ctx, key)
 	return err
-}
-
-func (r *Registry) GetService(ctx context.Context, name string) ([]*registry.Service, error) {
-	key := r.serviceKey(name)
-	resp, err := r.kv.Get(ctx, key, clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	items := make([]*registry.Service, 0, len(resp.Kvs))
-	for _, kv := range resp.Kvs {
-		si, err := unmarshal(kv.Value)
-		if err != nil {
-			return nil, err
-		}
-		if si.Name != name {
-			continue
-		}
-		items = append(items, si)
-	}
-	return items, nil
-}
-
-func (r *Registry) Watch(ctx context.Context, name string) (registry.Watcher, error) {
-	//key := r.serviceKey(name)
-	//return newWatcher(ctx, key, name, r.client)
-	return nil, nil
 }
