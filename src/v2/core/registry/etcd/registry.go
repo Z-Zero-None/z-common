@@ -9,7 +9,7 @@ import (
 	"z-common/src/v2/core/registry"
 )
 
-var _ registry.Registry = nil
+var _ registry.Registry = (*Registry)(nil)
 
 type Registry struct {
 	opts   *options
