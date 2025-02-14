@@ -17,7 +17,6 @@ type ConfigOptions struct {
 	Username  string      `json:"username"`
 	Password  string      `json:"password"`
 }
-
 type options struct {
 	weight  float64
 	cluster string
